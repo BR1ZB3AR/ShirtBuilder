@@ -219,58 +219,127 @@ fn torso_map<'a>(g: &'a Garment, back: bool, cfg: &'a TorsoCfg) -> MapFn<'a> {
     })
 }
 
-/// (A, arc table) for an ellipse of front depth B whose quarter arc equals `len` — cached
-fn ellipse_for(b: f64, len: f64) -> std::sync::Arc<(f64, ArcTable)> {
-    static CACHE: OnceLock<Mutex<HashMap<i64, std::sync::Arc<(f64, ArcTable)>>>> = OnceLock::new();
-    // JS: Math.round(x * 10) / 10 (half up)
-    let bq = (b * 10.0 + 0.5).floor() / 10.0;
-    let lq = (len * 10.0 + 0.5).floor() / 10.0;
-    let key = ((bq * 10.0).round() as i64) * 1_000_000 + (lq * 10.0).round() as i64;
+/// Half-width A of a torso row whose front and back are ellipse quarters of depth `rf`·A and
+/// `rb`·A and together wrap `len` of fabric (arc length grows in step with A at fixed proportions,
+/// so A = len / (arc(1, rf) + arc(1, rb))), with each side's arc table — cached. Front and back meet
+/// at the side seams (same A).
+fn ellipse_pair(rf: f64, rb: f64, len: f64) -> std::sync::Arc<(f64, ArcTable, ArcTable)> {
+    type Pair = std::sync::Arc<(f64, ArcTable, ArcTable)>;
+    static CACHE: OnceLock<Mutex<HashMap<(i64, i64, i64), Pair>>> = OnceLock::new();
+    let key = ((rf * 1000.0).round() as i64, (rb * 1000.0).round() as i64, (len * 10.0).round() as i64);
     let cache = CACHE.get_or_init(Default::default);
     if let Some(e) = cache.lock().unwrap().get(&key) {
         return e.clone();
     }
-    let (mut lo, mut hi) = (0.2, lq * 2.0);
-    for _ in 0..34 {
-        let m = (lo + hi) / 2.0;
-        if ArcTable::new(m, bq).total > lq {
-            hi = m
-        } else {
-            lo = m
-        }
-    }
-    let a = (lo + hi) / 2.0;
-    let e = std::sync::Arc::new((a, ArcTable::new(a, bq)));
+    let (rf, rb, len) = (key.0 as f64 / 1000.0, key.1 as f64 / 1000.0, key.2 as f64 / 10.0);
+    let a = len / (ArcTable::new(1.0, rf).total + ArcTable::new(1.0, rb).total);
+    let e = std::sync::Arc::new((a, ArcTable::new(a, rf * a), ArcTable::new(a, rb * a)));
     cache.lock().unwrap().insert(key, e.clone());
     e
 }
 
-/// Ghost-mannequin torso: the cross-section changes with height like a real upper body —
-/// deep and round through the chest, flattening to wide, shallow shoulders, then only the last
-/// few centimetres roll over to the shoulder seam. Each row still wraps exactly the fabric width
-/// of the pattern at that height, so prints keep their true size.
+/// The body of a T-shirt on a ghost mannequin, by height above the hem (cm, size M):
+/// (height, front depth ÷ half-width, back depth ÷ half-width), depths measured from the side seams.
+/// Measured on the realistic male and female tee models (assets/models/tee-m.bin, tee-f.bin) every
+/// 4 cm and lightly smoothed (their folds); above the armpits, where the sleeves join, against the
+/// chest width. Proportions rather than centimetres: every row keeps the realistic cross-section
+/// while wrapping exactly the fabric the pattern has there.
+const BODY_SHAPE_M: [(f64, f64, f64); 19] = [
+    (0.0, 0.736, 0.699),
+    (5.0, 0.754, 0.673),
+    (9.0, 0.777, 0.651),
+    (13.0, 0.809, 0.631),
+    (17.0, 0.838, 0.606),
+    (21.0, 0.859, 0.578),
+    (25.0, 0.870, 0.558),
+    (29.0, 0.863, 0.553),
+    (33.0, 0.849, 0.558),
+    (37.0, 0.826, 0.572),
+    (41.0, 0.816, 0.592),
+    (45.0, 0.816, 0.617),
+    (49.0, 0.806, 0.637),
+    (53.0, 0.771, 0.652),
+    (57.0, 0.701, 0.652),
+    (61.0, 0.597, 0.632),
+    (65.0, 0.478, 0.587),
+    (69.0, 0.343, 0.507),
+    (75.0, 0.199, 0.398),
+];
+const BODY_SHAPE_F: [(f64, f64, f64); 16] = [
+    (0.0, 0.688, 0.745),
+    (5.0, 0.705, 0.734),
+    (9.0, 0.743, 0.708),
+    (13.0, 0.800, 0.668),
+    (17.0, 0.862, 0.627),
+    (21.0, 0.919, 0.627),
+    (25.0, 0.954, 0.672),
+    (29.0, 0.963, 0.732),
+    (33.0, 0.948, 0.765),
+    (37.0, 0.921, 0.774),
+    (41.0, 0.921, 0.805),
+    (45.0, 0.860, 0.835),
+    (49.0, 0.732, 0.854),
+    (53.0, 0.573, 0.841),
+    (57.0, 0.409, 0.762),
+    (66.0, 0.244, 0.610),
+];
+
+/// (front, back) proportion at height `y` cm (size M) from a measured profile — a smooth curve
+/// through the rows (cubic Hermite), so the surface has no creases where straight segments would meet
+fn body_shape(table: &[(f64, f64, f64)], y: f64) -> (f64, f64) {
+    let n = table.len();
+    if y <= table[0].0 {
+        return (table[0].1, table[0].2);
+    }
+    if y >= table[n - 1].0 {
+        return (table[n - 1].1, table[n - 1].2);
+    }
+    let i = table.iter().position(|r| r.0 > y).unwrap_or(n - 1);
+    let (k0, k1) = (i - 1, i);
+    let (y0, y1) = (table[k0].0, table[k1].0);
+    let h = y1 - y0;
+    let t = (y - y0) / h;
+    // slopes from the neighbouring rows (one-sided at the ends)
+    let slope = |k: usize, col: fn(&(f64, f64, f64)) -> f64| {
+        let (a, b) = (k.saturating_sub(1), (k + 1).min(n - 1));
+        (col(&table[b]) - col(&table[a])) / (table[b].0 - table[a].0)
+    };
+    let herm = |col: fn(&(f64, f64, f64)) -> f64| {
+        let (p0, p1) = (col(&table[k0]), col(&table[k1]));
+        let (m0, m1) = (slope(k0, col) * h, slope(k1, col) * h);
+        let (t2, t3) = (t * t, t * t * t);
+        (2.0 * t3 - 3.0 * t2 + 1.0) * p0 + (t3 - 2.0 * t2 + t) * m0 + (-2.0 * t3 + 3.0 * t2) * p1 + (t3 - t2) * m1
+    };
+    (herm(|r| r.1), herm(|r| r.2))
+}
+
+/// Ghost-mannequin torso: the cross-section changes with height like the realistic T-shirt models
+/// (its proportions measured on them, `BODY_SHAPE_*`), and only the last few centimetres roll
+/// over to the shoulder seam. Each row wraps exactly the fabric of the front and back pattern at
+/// that height (front and back share it like a real body, so a deep front takes a little more of it
+/// and prints there come out a few per cent larger than on the flat pattern).
 fn ghost_torso_map(g: &Garment, back: bool) -> MapFn<'_> {
     let s = &g.spec;
     let w = s.body_w;
     let h = s.body_h;
     let half = w / 2.0;
     let female = s.fit() == Fit::F;
-    let bf0 = if female { 11.0 } else { 12.0 };
-    let bb0 = if female { 9.0 } else { 10.0 };
+    // the profiles are by height on size M: other sizes look them up at the same fraction of the length
+    let m = crate::pattern::garment(crate::pattern::GarmentId { size: crate::pattern::Size::M, ..s.id });
+    let ky = m.spec.body_h / h;
+    let table: &'static [(f64, f64, f64)] = if female { &BODY_SHAPE_F } else { &BODY_SHAPE_M };
     let y_arm = h - s.shoulder_drop - s.arm_depth;
     let slope = s.shoulder_drop / (s.shoulder_half - s.neck_w);
     let top_at = move |ax: f64| if ax <= s.neck_w { h } else { h - (ax - s.neck_w) * slope };
     let roll = 9.0;
-    let bust_y = y_arm - 4.0;
     Box::new(move |px, py| {
         let xx = px - half;
         let yy = h - py;
         let hr = half - g.inset(clamp(py, 0.0, h));
-        let fl = 1.0 - 0.36 * smooth(y_arm - 4.0, h - 3.0, yy);
-        let bf = bf0 * fl;
-        let b = (if back { bb0 } else { bf0 }) * fl;
-        let e = ellipse_for(bf, hr * 0.985);
-        let (a, table) = (e.0, &e.1);
+        let (rf, rb) = body_shape(table, yy * ky);
+        let e = ellipse_pair(rf, rb, 2.0 * hr * 0.985);
+        let (a, table) = (e.0, if back { &e.2 } else { &e.1 });
+        let b = a * if back { rb } else { rf };
         let u = xx / hr;
         let au = u.abs();
         let mut th = if au <= 1.0 { table.inv(au) } else { PI / 2.0 + ((au - 1.0) * hr) / b };
@@ -279,12 +348,7 @@ fn ghost_torso_map(g: &Garment, back: bool) -> MapFn<'_> {
         }
         let mut x = a * th.sin();
         let mut z = b * th.cos();
-        let ct = th.cos().max(0.0);
-        z *= 1.0 + (if back { 0.06 } else { 0.1 }) * (-sq((yy - (y_arm - 4.0)) / 10.0)).exp() * ct;
-        if !back && s.bust > 0.0 {
-            let bx = x.abs();
-            z += s.bust * (-sq((bx - 8.5) / 5.5)).exp() * (-sq((yy - bust_y) / 7.0)).exp() * ct;
-        }
+        // (chest and bust shape come with the measured depths)
         if !female {
             x *= 1.0 - 0.02 * (-sq((yy - h * 0.42) / 12.0)).exp();
         }
@@ -357,7 +421,7 @@ fn sleeve_map<'a>(g: &'a Garment, left: bool, arm_f: Vec<V3>, arm_b: Vec<V3>, gh
         if long {
             76.0
         } else {
-            56.0
+            64.0 // hangs like the realistic T-shirt models' sleeves
         }
     } else {
         s.sleeve_angle

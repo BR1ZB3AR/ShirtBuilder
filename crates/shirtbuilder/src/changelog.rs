@@ -5,6 +5,16 @@ pub type Release = (&'static str, &'static str, &'static str, &'static [(&'stati
 
 pub const CHANGELOG: &[Release] = &[
     (
+        "0.0.17",
+        "2026-11-19",
+        "Generated shirts with a realistic body",
+        &[
+            ("improved", "The generated 3D shirt (every style: V-neck, polo, collar shirts, long sleeves) now has the body of the realistic T-shirt models: its depth front and back, measured on them at every height, instead of a flat, narrow torso — men's within about 1 cm of the realistic tee."),
+            ("improved", "Short sleeves on the ghost mannequin hang at the realistic models' angle instead of sticking out sideways."),
+            ("improved", "Front and back now share the fabric around the body like a real shirt, so the chest is as wide as the realistic one; prints on the front show a few per cent larger than on the flat pattern."),
+        ],
+    ),
+    (
         "0.0.16",
         "2026-11-19",
         "Clean fabric on the realistic models",

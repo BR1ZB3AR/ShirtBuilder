@@ -3426,7 +3426,7 @@ dependencies = [
 
 [[package]]
 name = "sb-core"
-version = "0.0.16"
+version = "0.0.17"
 dependencies = [
  "serde",
  "serde_json",
@@ -3434,7 +3434,7 @@ dependencies = [
 
 [[package]]
 name = "sb-print"
-version = "0.0.16"
+version = "0.0.17"
 dependencies = [
  "base64",
  "image",
@@ -3551,7 +3551,7 @@ dependencies = [
 
 [[package]]
 name = "shirtbuilder"
-version = "0.0.16"
+version = "0.0.17"
 dependencies = [
  "base64",
  "bytemuck",
