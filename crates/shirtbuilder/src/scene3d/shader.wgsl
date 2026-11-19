@@ -29,7 +29,7 @@ struct Material {
     pbr: vec4<f32>,         // roughness, sheen, sheen roughness, clearcoat
     sheen_col: vec4<f32>,
     nmap: vec4<f32>,        // repeat xy, normal scale outside, inside
-    misc: vec4<f32>,        // x use vertex AO, y alpha test, z receives shadows, w unused
+    misc: vec4<f32>,        // x use vertex AO, y alpha test, z receives shadows, w knit tiles/cm on the surface (0: by UV)
 };
 
 @group(0) @binding(0) var<uniform> g: Globals;
@@ -199,6 +199,11 @@ fn fs_main(in: VOut, @builtin(front_facing) front: bool) -> @location(0) vec4<f3
     let t_in = textureSample(atlas_in, atlas_samp, tuv);
     let nuv = in.uv * m.nmap.xy;
     let nt = textureSample(nrm_tex, nrm_samp, nuv).xyz * 2.0 - 1.0;
+    // the knit laid straight onto the surface from three sides (realistic model, misc.w > 0)
+    let tk = m.misc.w;
+    let tpx = textureSample(nrm_tex, nrm_samp, in.world.zy * tk).xyz * 2.0 - 1.0;
+    let tpy = textureSample(nrm_tex, nrm_samp, in.world.xz * tk).xyz * 2.0 - 1.0;
+    let tpz = textureSample(nrm_tex, nrm_samp, in.world.xy * tk).xyz * 2.0 - 1.0;
     let dpx = dpdx(in.world);
     let dpy = dpdy(in.world);
     let duvx = dpdx(nuv);
@@ -231,7 +236,16 @@ fn fs_main(in: VOut, @builtin(front_facing) front: bool) -> @location(0) vec4<f3
     let face = select(-1.0, 1.0, front);
     var n = normalize(in.nrm) * face;
     let ns = select(m.nmap.z, m.nmap.w, inside);
-    if kind != 3 && ns > 0.0 {
+    if kind != 3 && ns > 0.0 && tk > 0.0 {
+        // triplanar, whiteout blend: each projection's bump added in its own plane, weighted by
+        // how squarely the surface faces it
+        var bw = pow(abs(n), vec3<f32>(4.0));
+        bw = bw / max(bw.x + bw.y + bw.z, 1e-5);
+        let ax = vec3<f32>(tpx.xy * ns + n.zy, abs(tpx.z) * n.x);
+        let ay = vec3<f32>(tpy.xy * ns + n.xz, abs(tpy.z) * n.y);
+        let az = vec3<f32>(tpz.xy * ns + n.xy, abs(tpz.z) * n.z);
+        n = normalize(ax.zyx * bw.x + ay.xzy * bw.y + az.xyz * bw.z);
+    } else if kind != 3 && ns > 0.0 {
         let q1p = cross(dpy, n);
         let q0p = cross(n, dpx);
         let tt = q1p * duvx.x + q0p * duvy.x;

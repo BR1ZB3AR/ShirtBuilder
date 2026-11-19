@@ -229,7 +229,16 @@ impl Viewer3d {
             self.gen += 1;
             self.worker.submit(Job::Geometry { gen: self.gen, garment: doc.garment, fabric: f.clone(), scene: s.clone() });
         }
-        let ak = format!("{}|{}|{}|{:?}|{}|{}", doc.garment, serde_json::to_string(&doc.layers).unwrap_or_default(), f.color, f.mode, f.color2, f.angle);
+        let ak = format!(
+            "{}|{}|{}|{:?}|{}|{}|{}",
+            doc.garment,
+            serde_json::to_string(&doc.layers).unwrap_or_default(),
+            f.color,
+            f.mode,
+            f.color2,
+            f.angle,
+            sb_core::scan::scan_name_for(doc).unwrap_or("gen") // realistic model: atlas without stitching
+        );
         if self.atlas_key.as_ref() != Some(&ak) {
             self.atlas_key = Some(ak);
             self.gen += 1;
@@ -326,6 +335,15 @@ impl Viewer3d {
             to.theta = self.cam.theta;
         }
         self.animate_to(to, now);
+    }
+
+    /// place the camera directly (tests): distance (cm), polar / azimuth angles, pan from the target
+    pub fn set_camera_for_tests(&mut self, r: f64, phi: f64, theta: f64, pan: [f32; 3]) {
+        self.anim = None;
+        self.user_zoomed = true;
+        self.cam = Sph { r, phi, theta };
+        self.pan = Vec3::from(pan);
+        self.delta = (0.0, 0.0);
     }
 
     pub fn reset_view(&mut self, doc: &Doc) {
@@ -489,9 +507,12 @@ impl Viewer3d {
             nmap: [(aw / tile) as f32, (ah / tile) as f32, ns, ns * 0.5],
             misc: [1.0, 1.0, 1.0, 0.0],
         };
-        let sns = (0.35 + f.texture * 1.1) as f32;
+        // knit strength on the realistic model: off at Texture 0, as before from the default 0.5 up
+        let sns = (if f.texture < 0.5 { 1.8 * f.texture } else { 0.35 + 1.1 * f.texture }) as f32;
         let scan_ao = f.ao as u8 as f32;
-        let scan_out = Material { tint_out: [1.0, 1.0, 1.0, 1.0], nmap: [cloth.nmap[0], cloth.nmap[1], sns, sns], misc: [scan_ao, 0.0, 1.0, 0.0], ..cloth };
+        // misc.w: knit tiles per cm, laid straight onto the model's surface (triplanar) — its pattern
+        // coordinates are too uneven for a fine repeating texture
+        let scan_out = Material { tint_out: [1.0, 1.0, 1.0, 1.0], nmap: [cloth.nmap[0], cloth.nmap[1], sns, sns], misc: [scan_ao, 0.0, 1.0, (1.0 / tile) as f32], ..cloth };
         let scan_in = Material { tint_out: [1.0, 1.0, 1.0, 2.0], ..scan_out };
         let btn_col = if luminance(&f.color) > 0.35 { shade(&f.color, 0.8) } else { mix(&f.color, "#ffffff", 0.14) };
         let solid = |c: [f32; 3], cc: f32| Material { tint_out: [1.0, 1.0, 1.0, 3.0], solid: v4(c, 1.0), pbr: [0.32, 0.0, 0.0, cc], misc: [0.0, 0.0, 1.0, 0.0], ..Default::default() };

@@ -81,8 +81,10 @@ fn atlas(gen: u64, doc: &Doc, imgs: &mut ImageCache) -> Option<AtlasOut> {
     imgs.prepare(sb_print::image_srcs(doc));
     imgs.retain(sb_print::image_srcs(doc));
     let ppc = sb_print::atlas_ppc(&g);
+    // the realistic model has real hems, stitching and rib: don't paint pattern ones over it
+    let details = scan_name_for(doc).is_none();
     let render = |side: Side| -> Option<MipImage> {
-        let pm = sb_print::render_atlas(&g, doc, side, ppc, imgs)?;
+        let pm = sb_print::render_atlas(&g, doc, side, ppc, imgs, details)?;
         let (w, h) = (pm.width(), pm.height());
         let mut data = pm.take();
         sb_print::unpremultiply(&mut data);

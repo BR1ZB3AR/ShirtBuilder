@@ -21,7 +21,7 @@ fn main() {
         imgs.prepare(image_srcs(&doc));
         for side in [Side::Outside, Side::Inside] {
             let t = Instant::now();
-            let pm = render_atlas(&g, &doc, side, atlas_ppc(&g), &imgs).unwrap();
+            let pm = render_atlas(&g, &doc, side, atlas_ppc(&g), &imgs, true).unwrap();
             println!("{id} {side:?}: {}×{} in {:.0} ms", pm.width(), pm.height(), t.elapsed().as_secs_f64() * 1000.0);
             pm.save_png(format!("{dir}/atlas-{id}-{side:?}.png")).unwrap();
         }

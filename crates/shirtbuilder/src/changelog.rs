@@ -5,6 +5,15 @@ pub type Release = (&'static str, &'static str, &'static str, &'static [(&'stati
 
 pub const CHANGELOG: &[Release] = &[
     (
+        "0.0.16",
+        "2026-11-19",
+        "Clean fabric on the realistic models",
+        &[
+            ("fixed", "Close up, the realistic T-shirts showed smeared, streaky knit and a wavy dashed line above the hems: the knit texture followed the model's uneven pattern mapping, and the pattern's stitching was painted over the model's real hems. The knit is now laid evenly over the model's surface, and the stitching isn't painted on (the models have real hems and rib)."),
+            ("improved", "Texture at 0 now turns the knit off on the realistic models too."),
+        ],
+    ),
+    (
         "0.0.15",
         "2026-11-19",
         "ShirtBuilder for Windows",

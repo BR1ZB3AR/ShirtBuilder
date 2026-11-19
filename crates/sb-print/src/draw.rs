@@ -21,6 +21,9 @@ pub enum Mode {
     Editor,
     /// texture for the 3D preview: outside orientation, seams bled outwards
     Atlas,
+    /// texture for the realistic 3D model: like `Atlas` without the construction details
+    /// (stitching, hem lines, rib) — the model has real ones, which drawn ones would only smear over
+    AtlasPlain,
     /// print sheets
     Export,
 }
@@ -188,7 +191,7 @@ pub fn draw_piece_content(pm: &mut Pixmap, ts: Transform, p: &Piece, g: &Garment
     // fabric fill — the gradient is laid out in piece coords, so it uses the same transform
     let fill = fabric_paint(f, p, g, dim, Transform::identity());
     pm.fill_path(&path, &fill, FillRule::Winding, ts, None);
-    if mode == Mode::Atlas {
+    if matches!(mode, Mode::Atlas | Mode::AtlasPlain) {
         // bleed so neighbouring pieces overlap at seams in 3D
         let s = Stroke { width: 1.0, line_join: LineJoin::Round, ..Default::default() };
         pm.stroke_path(&path, &fill, &s, ts, None);
@@ -201,7 +204,9 @@ pub fn draw_piece_content(pm: &mut Pixmap, ts: Transform, p: &Piece, g: &Garment
 
     // construction details — drawn in outside coords
     let dts = if mode == Mode::Editor && side == Side::Inside { flip(ts, p.w) } else { ts };
-    draw_details(pm, dts, &mask, p, g, f, side, mode);
+    if mode != Mode::AtlasPlain {
+        draw_details(pm, dts, &mask, p, g, f, side, mode);
+    }
 
     let lts = if mode != Mode::Editor && side == Side::Inside { flip(ts, p.w) } else { ts };
     // art from a neighbouring piece (or the other edge of this one) that runs over a seam continues here
@@ -535,7 +540,8 @@ pub fn atlas_ppc(g: &Garment) -> f64 {
 }
 
 /// one piece rendered into its own small pixmap, placed at (ox, oy) in the atlas
-fn atlas_piece(p: &Piece, g: &Garment, doc: &Doc, all_seams: &[Seam], side: Side, ppc: f64, imgs: &ImageCache) -> Option<(i32, i32, Pixmap)> {
+#[allow(clippy::too_many_arguments)]
+fn atlas_piece(p: &Piece, g: &Garment, doc: &Doc, all_seams: &[Seam], side: Side, ppc: f64, mode: Mode, imgs: &ImageCache) -> Option<(i32, i32, Pixmap)> {
     let (ax0, ay0, _, _) = atlas_rect(g);
     let m = 1.0; // bleed stroke reaches 0.5 cm beyond the outline
     let ox = (((p.x - ax0 - m) * ppc).floor()).max(0.0) as i32;
@@ -544,12 +550,14 @@ fn atlas_piece(p: &Piece, g: &Garment, doc: &Doc, all_seams: &[Seam], side: Side
     let h = ((p.h + 2.0 * m) * ppc).ceil() as u32 + 2;
     let mut pm = Pixmap::new(w, h)?;
     let ts = Transform::from_row(ppc as f32, 0.0, 0.0, ppc as f32, ((p.x - ax0) * ppc) as f32 - ox as f32, ((p.y - ay0) * ppc) as f32 - oy as f32);
-    draw_piece_content(&mut pm, ts, p, g, doc, all_seams, side, Mode::Atlas, None, imgs);
+    draw_piece_content(&mut pm, ts, p, g, doc, all_seams, side, mode, None, imgs);
     Some((ox, oy, pm))
 }
 
 /// Render a full texture atlas for one side of the fabric (pieces drawn in parallel on desktop).
-pub fn render_atlas(g: &Garment, doc: &Doc, side: Side, ppc: f64, imgs: &ImageCache) -> Option<Pixmap> {
+/// `details`: draw the construction details (stitching, hems, rib) — off for the realistic model.
+pub fn render_atlas(g: &Garment, doc: &Doc, side: Side, ppc: f64, imgs: &ImageCache, details: bool) -> Option<Pixmap> {
+    let mode = if details { Mode::Atlas } else { Mode::AtlasPlain };
     let (_, _, aw, ah) = atlas_rect(g);
     let (w, h) = ((aw * ppc).round() as u32, (ah * ppc).round() as u32);
     let mut atlas = Pixmap::new(w.max(1), h.max(1))?;
@@ -558,11 +566,11 @@ pub fn render_atlas(g: &Garment, doc: &Doc, side: Side, ppc: f64, imgs: &ImageCa
     let all_seams = seams(g, side);
     #[cfg(not(target_arch = "wasm32"))]
     let parts: Vec<_> = std::thread::scope(|sc| {
-        let hs: Vec<_> = g.pieces.iter().map(|p| sc.spawn(|| atlas_piece(p, g, doc, &all_seams, side, ppc, imgs))).collect();
+        let hs: Vec<_> = g.pieces.iter().map(|p| sc.spawn(|| atlas_piece(p, g, doc, &all_seams, side, ppc, mode, imgs))).collect();
         hs.into_iter().filter_map(|h| h.join().ok().flatten()).collect()
     });
     #[cfg(target_arch = "wasm32")]
-    let parts: Vec<_> = g.pieces.iter().filter_map(|p| atlas_piece(p, g, doc, &all_seams, side, ppc, imgs)).collect();
+    let parts: Vec<_> = g.pieces.iter().filter_map(|p| atlas_piece(p, g, doc, &all_seams, side, ppc, mode, imgs)).collect();
     for (ox, oy, pm) in parts {
         atlas.draw_pixmap(ox, oy, pm.as_ref(), &PixmapPaint::default(), Transform::identity(), None);
     }

@@ -403,6 +403,11 @@ impl ShirtBuilderApp {
         self.selected_layer()
     }
 
+    /// place the 3D camera (tests): distance cm, polar and azimuth angles (rad), pan from the target
+    pub fn set_camera_for_tests(&mut self, r: f64, phi: f64, theta: f64, pan: [f32; 3]) {
+        self.viewer.set_camera_for_tests(r, phi, theta, pan);
+    }
+
     /// 3D camera distance (cm), for tests
     pub fn camera_distance(&self) -> f64 {
         self.viewer.camera_distance()
