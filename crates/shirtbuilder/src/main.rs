@@ -23,6 +23,7 @@ fn main() -> eframe::Result {
         }
     }
     env_logger::init();
+    show_startup_errors();
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_title("ShirtBuilder")
@@ -49,6 +50,33 @@ fn main() -> eframe::Result {
             Ok(Box::new(app))
         }),
     )
+}
+
+/// A crash in the release build would otherwise vanish without a word (the Windows build has no
+/// console, and the app launcher hides the terminal): show the reason in a message box as well.
+#[cfg(not(target_arch = "wasm32"))]
+fn show_startup_errors() {
+    if cfg!(debug_assertions) {
+        return;
+    }
+    let default_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        default_hook(info);
+        // only the UI thread: the background renderer's problems don't stop the app
+        if std::thread::current().name() != Some("main") {
+            return;
+        }
+        let what = info.payload().downcast_ref::<String>().map(String::as_str).or_else(|| info.payload().downcast_ref::<&str>().copied()).unwrap_or("unknown error");
+        let what: String = what.chars().take(1200).collect();
+        rfd::MessageDialog::new()
+            .set_level(rfd::MessageLevel::Error)
+            .set_title("ShirtBuilder stopped")
+            .set_description(format!(
+                "ShirtBuilder ran into a problem and has to close.\n\n{what}\n\nIf this keeps happening, please report it at https://github.com/BR1ZB3AR/ShirtBuilder/issues"
+            ))
+            .set_buttons(rfd::MessageButtons::Ok)
+            .show();
+    }));
 }
 
 #[cfg(target_arch = "wasm32")]

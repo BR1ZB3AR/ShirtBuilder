@@ -12,6 +12,8 @@ pub const CHANGELOG: &[Release] = &[
             ("new", "ShirtBuilder runs on Windows 10 and 11: an .msi installer adds it to the Start menu and opens .sb design files with ShirtBuilder; uninstall it from Settings › Apps."),
             ("improved", "The window and taskbar show the ShirtBuilder icon."),
             ("improved", "When no graphics driver can be used, the advice fits your system (Windows or Linux)."),
+            ("improved", "Graphics card auto-detect prefers Vulkan when a card also offers DirectX 12 — the tested path, and the one that works under Wine."),
+            ("fixed", "If ShirtBuilder has to close because of an error, it now says why in a message box instead of just disappearing."),
         ],
     ),
     (

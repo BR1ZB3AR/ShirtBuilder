@@ -74,8 +74,14 @@ pub fn score(info: &wgpu::AdapterInfo) -> i32 {
         wgpu::DeviceType::Other => 100,
         wgpu::DeviceType::Cpu => 0,
     };
+    // the same card often shows up through several APIs (on Windows: Vulkan and DirectX 12).
+    // Vulkan first: it's the path the app is developed and tested on, and it also works under
+    // Wine, whose DirectX 12 shader compiler can't build egui's shaders. DirectX 12 still wins
+    // where a card has no Vulkan driver.
     let api = match info.backend {
-        wgpu::Backend::Vulkan | wgpu::Backend::Metal | wgpu::Backend::Dx12 => 20,
+        wgpu::Backend::Vulkan => 22,
+        wgpu::Backend::Metal => 21,
+        wgpu::Backend::Dx12 => 20,
         wgpu::Backend::Gl => 10,
         _ => 0,
     };
