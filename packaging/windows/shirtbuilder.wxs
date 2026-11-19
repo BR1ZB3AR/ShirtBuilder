@@ -2,7 +2,8 @@
 <!--
   ShirtBuilder Windows installer (WiX Toolset 5). Built by .github/workflows/release-windows.yml:
 
-    wix build packaging/windows/shirtbuilder.wxs -arch x64 -d Version=0.0.15 -d ExePath=target/release/shirtbuilder.exe -o ShirtBuilder.msi
+    wix build packaging/windows/shirtbuilder.wxs -arch x64 -d Version=0.0.15 -d ExePath=target/release/shirtbuilder.exe
+              -d IconPath=crates/shirtbuilder/assets/shirtbuilder.ico -o ShirtBuilder-x86_64.msi
 
   Installs ShirtBuilder.exe into Program Files, adds a Start menu entry and opens .sb design files
   with ShirtBuilder. A newer installer replaces an older installation (same UpgradeCode — never
@@ -19,8 +20,10 @@
     <MajorUpgrade DowngradeErrorMessage="A newer version of ShirtBuilder is already installed." />
     <MediaTemplate EmbedCab="yes" />
 
-    <Icon Id="ShirtBuilderIcon" SourceFile="$(var.ExePath)" />
-    <Property Id="ARPPRODUCTICON" Value="ShirtBuilderIcon" />
+    <!-- the .ico, not the .exe: an Icon is stored whole and uncompressed in the installer; the Id's
+         extension tells Windows how to read it -->
+    <Icon Id="ShirtBuilder.ico" SourceFile="$(var.IconPath)" />
+    <Property Id="ARPPRODUCTICON" Value="ShirtBuilder.ico" />
     <Property Id="ARPURLINFOABOUT" Value="https://github.com/BR1ZB3AR/ShirtBuilder" />
     <Property Id="ARPHELPLINK" Value="https://github.com/BR1ZB3AR/ShirtBuilder/issues" />
 
@@ -33,7 +36,7 @@
                       Name="ShirtBuilder"
                       Description="Design T-shirts on the sewing pattern"
                       WorkingDirectory="INSTALLFOLDER"
-                      Icon="ShirtBuilderIcon"
+                      Icon="ShirtBuilder.ico"
                       Advertise="yes" />
           </File>
           <!-- .sb design files open in ShirtBuilder (double-click in Explorer) -->
