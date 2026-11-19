@@ -23,6 +23,18 @@ true-scale print and cut sheets.
   thrown away without asking, and everything can be undone.
 - 30 themes, a custom title bar, and a layout that adapts down to small windows.
 
+## Screenshots
+
+**Themes** — 30 built-in themes (standard, Liquid Glass, Cyberpunk and high contrast), filtered by light or dark,
+with your own accent colour:
+
+![The theme gallery open over the app, with theme previews, filters and accent colours](docs/themes.png)
+
+**Scene** — backdrops, studio lighting, ghost mannequin or hanger, the realistic or the generated 3D model, and the
+graphics card that draws the preview:
+
+![The Scene panel with backdrop, lighting, display and graphics card settings](docs/scene.png)
+
 ## Download
 
 Get the AppImage from the [latest release](https://github.com/BR1ZB3AR/ShirtBuilder/releases/latest),
