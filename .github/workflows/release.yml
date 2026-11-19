@@ -1,6 +1,8 @@
 name: Release AppImage
 
-# When a release is published, build the AppImage and attach it to that release.
+# When a release is published, build the AppImage and attach it to that release as
+# ShirtBuilder-x86_64.AppImage (no version in the name, so .../releases/latest/download/... always
+# fetches the newest).
 #
 # The app is compiled inside Ubuntu 22.04 (glibc 2.35): a binary links against the glibc of the
 # system it is built on and then needs at least that version, so building on an older system
@@ -68,4 +70,6 @@ jobs:
       - name: Attach to the release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "$TAG" target/appimage/*.AppImage --clobber
+        run: |
+          cp target/appimage/ShirtBuilder-*-x86_64.AppImage ShirtBuilder-x86_64.AppImage
+          gh release upload "$TAG" ShirtBuilder-x86_64.AppImage --clobber

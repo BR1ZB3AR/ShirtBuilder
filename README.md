@@ -4,6 +4,11 @@
 
 <h1 align="center">ShirtBuilder</h1>
 
+<p align="center">
+  <a href="https://github.com/BR1ZB3AR/ShirtBuilder/releases/latest/download/ShirtBuilder-x86_64.msi"><img alt="Windows: download" src="https://img.shields.io/badge/Windows-Download-0078D6?style=for-the-badge&labelColor=333333&logo=data:image/svg%2Bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0iTTAgMGgxMS40djExLjRIMHpNMTIuNiAwSDI0djExLjRIMTIuNnpNMCAxMi42aDExLjRWMjRIMHpNMTIuNiAxMi42SDI0VjI0SDEyLjZ6Ii8+PC9zdmc+"></a>
+  <a href="https://github.com/BR1ZB3AR/ShirtBuilder/releases/latest/download/ShirtBuilder-x86_64.AppImage"><img alt="Linux: AppImage" src="https://img.shields.io/badge/Linux-AppImage-E95420?style=for-the-badge&labelColor=333333&logo=linux&logoColor=white"></a>
+</p>
+
 Design T-shirts on the real sewing pattern and see them on a 3D shirt as you go. Place text and
 images on the flat pieces — front, back, sleeves, neck rib — and the 3D preview shows the print
 exactly where it will land, including artwork that runs across a seam. When you're done, export
@@ -45,20 +50,19 @@ From the [latest release](https://github.com/BR1ZB3AR/ShirtBuilder/releases/late
 
 ### Windows
 
-- **`ShirtBuilder-<version>-x86_64.msi`** — installer: adds ShirtBuilder to the Start menu and opens `.sb`
-  design files with it. Uninstall it from *Settings › Apps*.
-- **`ShirtBuilder-<version>-x86_64.exe`** — portable: download and run, nothing is installed.
+Download **`ShirtBuilder-x86_64.msi`** and open it: it installs ShirtBuilder, adds it to the Start menu and
+opens `.sb` design files with it. Uninstall it from *Settings › Apps*.
 
-Windows 10 or 11, 64-bit. The files aren't code-signed, so Windows SmartScreen may warn the first time:
+Windows 10 or 11, 64-bit. The installer isn't code-signed, so Windows SmartScreen may warn the first time:
 choose *More info › Run anyway*.
 
 ### Linux
 
-Download the AppImage, make it executable and run it:
+Download **`ShirtBuilder-x86_64.AppImage`**, make it executable and run it:
 
 ```sh
-chmod +x ShirtBuilder-*-x86_64.AppImage
-./ShirtBuilder-*-x86_64.AppImage
+chmod +x ShirtBuilder-x86_64.AppImage
+./ShirtBuilder-x86_64.AppImage
 ```
 
 It runs on 64-bit Linux with glibc 2.35 or newer (Ubuntu 22.04+, Debian 12+, Fedora 36+, Linux Mint 21+,
@@ -92,7 +96,7 @@ To build an AppImage yourself:
 The script downloads the official [appimagetool](https://github.com/AppImage/appimagetool) and AppImage
 runtime once. An AppImage needs at least the glibc version of the system it was built on; release
 builds are made in Ubuntu 22.04 by [the release workflow](.github/workflows/release.yml). The Windows
-`.exe` and `.msi` are built on Windows by [another workflow](.github/workflows/release-windows.yml)
+installer is built on Windows by [another workflow](.github/workflows/release-windows.yml)
 ([WiX](https://wixtoolset.org) installer source: [`packaging/windows`](packaging/windows)).
 
 ## Using it

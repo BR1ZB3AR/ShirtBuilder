@@ -1,9 +1,9 @@
 name: Release Windows
 
-# When a release is published, build ShirtBuilder for Windows and attach it to that release:
-#   ShirtBuilder-<version>-x86_64.exe   portable: download and run, nothing to install
-#   ShirtBuilder-<version>-x86_64.msi   installer: Program Files, Start menu, .sb files open in ShirtBuilder
-# Run it by hand without a tag for a test build; the files are then kept as a workflow artifact.
+# When a release is published, build the Windows installer and attach it to that release as
+# ShirtBuilder-x86_64.msi (Program Files, Start menu, .sb files open in ShirtBuilder). The name has
+# no version in it, so .../releases/latest/download/ShirtBuilder-x86_64.msi always fetches the newest.
+# Run it by hand without a tag for a test build; the installer is then kept as a workflow artifact.
 
 on:
   release:
@@ -52,18 +52,14 @@ jobs:
       - name: Build
         run: cargo build --release --locked -p shirtbuilder
 
-      - name: Portable .exe
-        run: |
-          mkdir -p dist
-          cp target/release/shirtbuilder.exe "dist/ShirtBuilder-$VERSION-x86_64.exe"
-
       - name: Installer .msi (WiX 5)
         run: |
+          mkdir -p dist
           dotnet tool install --global wix --version 5.0.2
           export PATH="$PATH:$USERPROFILE/.dotnet/tools"
           wix build packaging/windows/shirtbuilder.wxs -arch x64 \
             -d "Version=$VERSION" -d "ExePath=target/release/shirtbuilder.exe" \
-            -o "dist/ShirtBuilder-$VERSION-x86_64.msi"
+            -o "dist/ShirtBuilder-x86_64.msi"
           ls -l dist
 
       - uses: actions/upload-artifact@v4
@@ -75,4 +71,4 @@ jobs:
         if: env.TAG != ''
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "$TAG" dist/*.exe dist/*.msi --clobber
+        run: gh release upload "$TAG" dist/ShirtBuilder-x86_64.msi --clobber
