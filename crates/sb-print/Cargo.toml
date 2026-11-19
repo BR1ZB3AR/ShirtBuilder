@@ -1,0 +1,14 @@
+[package]
+name = "sb-print"
+version = "0.0.14"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "ShirtBuilder print renderer: fabric, construction details, text and image artwork, seam wrap-around (CPU, tiny-skia)"
+
+[dependencies]
+sb-core = { path = "../sb-core" }
+resvg = { version = "0.45", default-features = false, features = ["text"] }
+rustybuzz = "0.20"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp", "gif", "bmp"] }
+base64 = "0.22"

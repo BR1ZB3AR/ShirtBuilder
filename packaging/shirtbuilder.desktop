@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=ShirtBuilder
+GenericName=T-shirt designer
+Comment=Design T-shirts on the sewing pattern
+Exec=shirtbuilder %F
+Icon=shirtbuilder
+Terminal=false
+Categories=Graphics;2DGraphics;
+Keywords=t-shirt;shirt;sewing;pattern;print;design;
+StartupWMClass=shirtbuilder
+MimeType=application/x-shirtbuilder;

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ShirtBuilder design files (.sb): installed by install-desktop.sh so file managers show them
+     with the ShirtBuilder icon and open them in ShirtBuilder on double-click. -->
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="application/x-shirtbuilder">
+    <comment>ShirtBuilder design</comment>
+    <sub-class-of type="application/json"/>
+    <icon name="shirtbuilder"/>
+    <glob pattern="*.sb"/>
+    <magic priority="60">
+      <match type="string" offset="0:64" value="&quot;format&quot;: &quot;shirtbuilder-design&quot;"/>
+    </magic>
+  </mime-type>
+</mime-info>

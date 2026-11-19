@@ -1,0 +1,22 @@
+[workspace]
+resolver = "2"
+members = ["crates/sb-core", "crates/sb-print", "crates/shirtbuilder"]
+
+[workspace.package]
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/BR1ZB3AR/ShirtBuilder"
+
+[workspace.dependencies]
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = { version = "1.0.154", features = ["float_roundtrip"] } # exact numbers when designs are read back
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+
+# keep debug builds usable: geometry code runs every frame
+[profile.dev.package."*"]
+opt-level = 2
+[profile.dev.package.sb-core]
+opt-level = 2

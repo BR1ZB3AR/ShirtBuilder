@@ -1,0 +1,71 @@
+name: Release AppImage
+
+# When a release is published, build the AppImage and attach it to that release.
+#
+# The app is compiled inside Ubuntu 22.04 (glibc 2.35): a binary links against the glibc of the
+# system it is built on and then needs at least that version, so building on an older system
+# lets the AppImage run on Ubuntu 22.04+, Debian 12+, Fedora 36+ and newer distributions.
+# Graphics, windowing and file-dialog libraries are loaded from the user's system at run time.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to build and attach the AppImage to (e.g. v0.0.14)
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: appimage-${{ github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: true
+
+jobs:
+  appimage:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      - name: Version in Cargo.toml matches the tag
+        run: |
+          v=$(grep -m1 '^version' crates/shirtbuilder/Cargo.toml | cut -d'"' -f2)
+          if [ "v$v" != "$TAG" ]; then
+            echo "::error::crates/shirtbuilder/Cargo.toml says $v, but the release tag is $TAG"
+            exit 1
+          fi
+
+      - name: Build in Ubuntu 22.04 (glibc 2.35)
+        run: |
+          docker run --rm -v "$PWD:/src" -w /src ubuntu:22.04 bash -euo pipefail -c '
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get update -qq
+            apt-get install -y -qq --no-install-recommends ca-certificates curl gcc libc6-dev >/dev/null
+            curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+            . "$HOME/.cargo/env"
+            cargo build --release --locked -p shirtbuilder
+            chown -R '"$(id -u):$(id -g)"' target
+          '
+
+      - name: Newest glibc the app needs
+        run: |
+          need=$(objdump -T target/release/shirtbuilder | grep -o 'GLIBC_[0-9.]*' | sort -V -u | tail -1)
+          echo "needs $need"
+          case "$need" in
+            GLIBC_2.[0-9]|GLIBC_2.[0-2][0-9]|GLIBC_2.3[0-5]|GLIBC_2.[0-9].*|GLIBC_2.[0-2][0-9].*|GLIBC_2.3[0-5].*) ;;
+            *) echo "::error::the app needs $need, newer than Ubuntu 22.04's glibc 2.35"; exit 1 ;;
+          esac
+
+      - name: Pack the AppImage
+        run: SKIP_BUILD=1 ./packaging/build-appimage.sh
+
+      - name: Attach to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$TAG" target/appimage/*.AppImage --clobber

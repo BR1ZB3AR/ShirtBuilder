@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>shirtbuilder</id>
+  <name>ShirtBuilder</name>
+  <summary>Design T-shirts on the sewing pattern</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <description>
+    <p>Design prints for T-shirts, polos and collar shirts directly on the real sewing pattern —
+    male and female fits, sizes XS–XXL, cut lines with seam allowances and notches.</p>
+  </description>
+  <launchable type="desktop-id">shirtbuilder.desktop</launchable>
+  <releases>
+    <release version="@VERSION@" date="@DATE@"/>
+  </releases>
+  <content_rating type="oars-1.1"/>
+</component>
