@@ -1,4 +1,8 @@
-# ShirtBuilder
+<p align="center">
+  <img src="docs/logo.png" alt="ShirtBuilder logo: a T-shirt, half wireframe and half colour, with a pen" width="160">
+</p>
+
+<h1 align="center">ShirtBuilder</h1>
 
 Design T-shirts on the real sewing pattern and see them on a 3D shirt as you go. Place text and
 images on the flat pieces — front, back, sleeves, neck rib — and the 3D preview shows the print
