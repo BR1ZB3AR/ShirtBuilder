@@ -5,7 +5,7 @@ images on the flat pieces — front, back, sleeves, neck rib — and the 3D prev
 exactly where it will land, including artwork that runs across a seam. When you're done, export
 true-scale print and cut sheets.
 
-![ShirtBuilder: the sewing pattern on the left, the 3D preview in the middle, the design panel on the right](docs/screenshot.png)
+![ShirtBuilder: the sewing pattern on the left, the 3D preview in the middle, the design panel on the right](docs/shirtbuilder-magenta.png)
 
 ## Features
 
