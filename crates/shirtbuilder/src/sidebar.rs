@@ -630,7 +630,11 @@ impl ShirtBuilderApp {
                             if gpu.better_than_active().is_some() {
                                 "The 3D is being drawn by the CPU although a graphics card was found. Choose it below and restart."
                             } else {
-                                "No graphics card driver could be used, so the 3D is drawn by the CPU (slow). Install your card's Vulkan driver (NVIDIA: nvidia-utils · AMD: vulkan-radeon · Intel: vulkan-intel) and restart."
+                                if cfg!(target_os = "windows") {
+                                    "No graphics card driver could be used, so the 3D is drawn by the CPU (slow). Install or update your graphics driver from NVIDIA, AMD or Intel and restart."
+                                } else {
+                                    "No graphics card driver could be used, so the 3D is drawn by the CPU (slow). Install your card's Vulkan driver (NVIDIA: nvidia-utils · AMD: vulkan-radeon · Intel: vulkan-intel) and restart."
+                                }
                             },
                         );
                     } else {

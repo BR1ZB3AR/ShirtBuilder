@@ -151,6 +151,9 @@ mod native {
     /// program can use the card (Vulkan and OpenGL both fail) — the most common reason for
     /// landing on the CPU with an NVIDIA card in the machine.
     pub fn nvidia_versions() -> Option<(String, String)> {
+        if !cfg!(target_os = "linux") {
+            return None; // Windows / macOS update the driver and its libraries together
+        }
         let kernel = std::fs::read_to_string("/proc/driver/nvidia/version").ok()?;
         let kernel = version_in(kernel.lines().next()?.split_once("Kernel Module")?.1)?;
         let user = ["/usr/lib", "/usr/lib64", "/usr/lib/x86_64-linux-gnu"].iter().find_map(|dir| {

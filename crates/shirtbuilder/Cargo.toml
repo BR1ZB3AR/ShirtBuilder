@@ -1,10 +1,13 @@
 [package]
 name = "shirtbuilder"
-version = "0.0.14"
+version = "0.0.15"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
 description = "ShirtBuilder — design T-shirts on the sewing pattern, with a live 3D preview"
+
+[build-dependencies]
+winresource = "0.1.34" # Windows: icon + version info in the .exe (build.rs)
 
 [dependencies]
 sb-core = { path = "../sb-core" }

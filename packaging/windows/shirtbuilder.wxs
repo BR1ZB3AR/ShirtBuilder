@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ShirtBuilder Windows installer (WiX Toolset 5). Built by .github/workflows/release-windows.yml:
+
+    wix build packaging/windows/shirtbuilder.wxs -arch x64 -d Version=0.0.15 -d ExePath=target/release/shirtbuilder.exe -o ShirtBuilder.msi
+
+  Installs ShirtBuilder.exe into Program Files, adds a Start menu entry and opens .sb design files
+  with ShirtBuilder. A newer installer replaces an older installation (same UpgradeCode — never
+  change it); "Apps & features" uninstalls it.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="ShirtBuilder"
+           Manufacturer="BR1ZB3AR"
+           Version="$(var.Version)"
+           UpgradeCode="8e879da7-916c-4f78-9e62-8ae38403efb2"
+           Scope="perMachine"
+           Compressed="yes">
+    <SummaryInformation Description="ShirtBuilder — design T-shirts on the sewing pattern" />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of ShirtBuilder is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Icon Id="ShirtBuilderIcon" SourceFile="$(var.ExePath)" />
+    <Property Id="ARPPRODUCTICON" Value="ShirtBuilderIcon" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/BR1ZB3AR/ShirtBuilder" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/BR1ZB3AR/ShirtBuilder/issues" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="ShirtBuilder">
+        <Component Id="App">
+          <File Id="ShirtBuilderExe" Source="$(var.ExePath)" Name="ShirtBuilder.exe" KeyPath="yes">
+            <Shortcut Id="StartMenuShortcut"
+                      Directory="ProgramMenuFolder"
+                      Name="ShirtBuilder"
+                      Description="Design T-shirts on the sewing pattern"
+                      WorkingDirectory="INSTALLFOLDER"
+                      Icon="ShirtBuilderIcon"
+                      Advertise="yes" />
+          </File>
+          <!-- .sb design files open in ShirtBuilder (double-click in Explorer) -->
+          <ProgId Id="ShirtBuilder.Design" Description="ShirtBuilder design" Icon="ShirtBuilderExe" IconIndex="0" Advertise="no">
+            <Extension Id="sb" ContentType="application/x-shirtbuilder">
+              <Verb Id="open" Command="Open" TargetFile="ShirtBuilderExe" Argument="&quot;%1&quot;" />
+            </Extension>
+          </ProgId>
+        </Component>
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder" />
+
+    <Feature Id="Main" Title="ShirtBuilder" Level="1">
+      <ComponentRef Id="App" />
+    </Feature>
+  </Package>
+</Wix>

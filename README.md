@@ -37,8 +37,20 @@ graphics card that draws the preview:
 
 ## Download
 
-Get the AppImage from the [latest release](https://github.com/BR1ZB3AR/ShirtBuilder/releases/latest),
-then make it executable and run it:
+From the [latest release](https://github.com/BR1ZB3AR/ShirtBuilder/releases/latest):
+
+### Windows
+
+- **`ShirtBuilder-<version>-x86_64.msi`** — installer: adds ShirtBuilder to the Start menu and opens `.sb`
+  design files with it. Uninstall it from *Settings › Apps*.
+- **`ShirtBuilder-<version>-x86_64.exe`** — portable: download and run, nothing is installed.
+
+Windows 10 or 11, 64-bit. The files aren't code-signed, so Windows SmartScreen may warn the first time:
+choose *More info › Run anyway*.
+
+### Linux
+
+Download the AppImage, make it executable and run it:
 
 ```sh
 chmod +x ShirtBuilder-*-x86_64.AppImage
@@ -51,7 +63,8 @@ your desktop's file dialogs (xdg-desktop-portal, standard on KDE and GNOME).
 
 ## Build from source
 
-You need a recent stable Rust toolchain ([rustup](https://rustup.rs)); no other development libraries.
+You need a recent stable Rust toolchain ([rustup](https://rustup.rs)) — on Windows with the MSVC build tools
+that rustup offers to install; no other development libraries.
 
 ```sh
 git clone https://github.com/BR1ZB3AR/ShirtBuilder.git
@@ -74,7 +87,9 @@ To build an AppImage yourself:
 
 The script downloads the official [appimagetool](https://github.com/AppImage/appimagetool) and AppImage
 runtime once. An AppImage needs at least the glibc version of the system it was built on; release
-builds are made in Ubuntu 22.04 by [the release workflow](.github/workflows/release.yml).
+builds are made in Ubuntu 22.04 by [the release workflow](.github/workflows/release.yml). The Windows
+`.exe` and `.msi` are built on Windows by [another workflow](.github/workflows/release-windows.yml)
+([WiX](https://wixtoolset.org) installer source: [`packaging/windows`](packaging/windows)).
 
 ## Using it
 

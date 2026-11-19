@@ -30,7 +30,9 @@ fn main() -> eframe::Result {
             .with_inner_size([1440.0, 900.0])
             .with_min_inner_size([960.0, 600.0])
             .with_decorations(false) // the top bar is the title bar (titlebar.rs), like SolidCraft
-            .with_drag_and_drop(true),
+            .with_drag_and_drop(true)
+            // window / taskbar icon (Windows, X11; Wayland takes it from the .desktop entry)
+            .with_icon(eframe::icon_data::from_png_bytes(include_bytes!("../assets/icon-256.png")).unwrap_or_default()),
         // auto-detect the graphics card (or use the one chosen in Scene › Graphics card)
         wgpu_options: shirtbuilder::gpu::wgpu_options(shirtbuilder::gpu::load_choice()),
         ..Default::default()

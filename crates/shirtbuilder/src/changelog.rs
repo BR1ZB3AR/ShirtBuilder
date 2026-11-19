@@ -5,6 +5,16 @@ pub type Release = (&'static str, &'static str, &'static str, &'static [(&'stati
 
 pub const CHANGELOG: &[Release] = &[
     (
+        "0.0.15",
+        "2026-11-19",
+        "ShirtBuilder for Windows",
+        &[
+            ("new", "ShirtBuilder runs on Windows 10 and 11: a portable .exe (just run it) and an .msi installer that adds it to the Start menu and opens .sb design files with ShirtBuilder."),
+            ("improved", "The window and taskbar show the ShirtBuilder icon."),
+            ("improved", "When no graphics driver can be used, the advice fits your system (Windows or Linux)."),
+        ],
+    ),
+    (
         "0.0.14",
         "2026-11-19",
         "Drag, resize and edit text that works",
